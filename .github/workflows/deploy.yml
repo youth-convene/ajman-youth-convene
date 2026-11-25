@@ -32,14 +32,19 @@ jobs:
           cache: npm
           cache-dependency-path: app/package-lock.json
 
-      # Without the API URL the app would silently run in demo mode and
-      # registrations would never reach the Google Sheet, so stop here instead.
+      # The API URL comes from the VITE_API_URL repository variable if set,
+      # otherwise from app/.env. Without it the app would silently run in demo
+      # mode and registrations would never reach the Google Sheet, so stop here.
       - name: Check VITE_API_URL is set
         env:
-          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VAR_URL: ${{ vars.VITE_API_URL }}
         run: |
-          if [ -z "$VITE_API_URL" ]; then
-            echo "::error::Repository variable VITE_API_URL is not set. Add it under Settings > Secrets and variables > Actions > Variables (see README)."
+          if [ -n "$VAR_URL" ]; then
+            echo "Using VITE_API_URL from the repository variable."
+          elif grep -qE '^VITE_API_URL=\S+' .env 2>/dev/null; then
+            echo "Using VITE_API_URL from app/.env."
+          else
+            echo "::error::VITE_API_URL is not set. Put it in app/.env or add a repository variable under Settings > Secrets and variables > Actions > Variables (see README)."
             exit 1
           fi
 
@@ -47,8 +52,12 @@ jobs:
 
       - name: Build
         env:
-          VITE_API_URL: ${{ vars.VITE_API_URL }}
-        run: npm run build
+          VAR_URL: ${{ vars.VITE_API_URL }}
+        run: |
+          # Only override app/.env when the repository variable is set.
+          if [ -n "$VAR_URL" ]; then export VITE_API_URL="$VAR_URL"; fi
+          npm run build
+          grep -q "script.google.com" dist/assets/*.js || { echo "::error::Built app does not contain the API URL."; exit 1; }
 
       - uses: actions/configure-pages@v5
 
