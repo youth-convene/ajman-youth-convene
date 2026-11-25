@@ -52,16 +52,29 @@ npm run dev                 # local testing at http://localhost:5173
 
 If `VITE_API_URL` is empty, the app runs in **demo mode**: a yellow banner appears and data is saved only in that browser. Use demo mode for trying the app out, not for the event.
 
-## 3. Publish it online
+## 3. Publish it online (GitHub Pages)
 
-```bash
-cd app
-npm run build               # creates app/dist
-```
+The workflow in `.github/workflows/deploy.yml` builds the app and publishes it to GitHub Pages every time you push to `main`.
 
-Upload the `dist` folder to any static host, such as **Netlify** (drag and drop the folder), **Vercel**, **Firebase Hosting** or **GitHub Pages**. The app uses relative paths and hash URLs, so it works from any folder without server configuration.
+**One-time setup on GitHub:**
 
-> ⚠️ The QR scanner needs the camera, and browsers only allow the camera on **HTTPS**. All the hosts above provide HTTPS automatically.
+1. **Turn on Pages.** Go to **Settings → Pages**. Under *Build and deployment → Source*, choose **GitHub Actions**.
+2. **Add the API URL.** Go to **Settings → Secrets and variables → Actions → Variables tab → New repository variable**.
+   - Name: `VITE_API_URL`
+   - Value: your Apps Script Web app URL, ending in `/exec`
+
+   The build stops with an error if this variable is missing. This prevents a site that looks fine but never saves registrations.
+3. **Run the first deployment.** Go to **Actions → Deploy to GitHub Pages → Run workflow**, or push any commit to `main`.
+
+When the run finishes (about 1 minute), the site is live at:
+
+- Registration: **https://akhilpoyyayil.github.io/ajman-youth-convene/**
+- Attendance (staff): **https://akhilpoyyayil.github.io/ajman-youth-convene/#/attendance**
+
+**Updating the site:** commit and push to `main`. It redeploys automatically.
+**Changing the API URL:** edit the variable, then re-run the workflow from the Actions tab.
+
+GitHub Pages uses HTTPS, which the QR scanner needs: browsers only allow the camera on secure sites. The app also works on any other static host, such as Netlify or Vercel. Run `npm run build` in `app/` and upload the `dist` folder.
 
 ---
 
